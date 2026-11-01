@@ -40,8 +40,7 @@ export const entityAPI = {
       e_barcode: entityData.barcode || entityData.e_barcode || '',
       e_related_to_e: entityData.e_related || ''
     };
-    const response = '';
-    response = await api.post('/entities', backendData);
+    const response = await api.post('/entities', backendData);
     return response.data;
   },
 
@@ -61,8 +60,7 @@ export const entityAPI = {
 
       backEndData.push(entityData);
     }
-    const response = '';
-    response = await api.post('/entities/entityvariants', backEndData);
+    const response = await api.post('/entities/entityvariants', backEndData);
     return response;
   },
 
