@@ -1,361 +1,398 @@
-import React, { useState, useEffect } from 'react';
-import toast from 'react-hot-toast';
-import DashboardCard from './DashboardCard';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import {
+  AlertTriangle,
+  Boxes,
+  ClipboardList,
+  Factory,
+  PackagePlus,
+  RefreshCw,
+  Settings,
+  ShoppingCart,
+  TrendingUp,
+  Users,
+  BarChart3,
+  UserPlus,
+} from 'lucide-react';
 import { dashboardAPI } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
+
+const SECTIONS = {
+  sales: () => dashboardAPI.getSalesStats(),
+  inventory: () => dashboardAPI.getInventoryStats(),
+  todos: () => dashboardAPI.getTodoStats(),
+  financial: () => dashboardAPI.getFinancialStats(),
+  customers: () => dashboardAPI.getCustomerStats(),
+  suppliers: () => dashboardAPI.getSupplierStats(),
+  lowStock: () => dashboardAPI.getLowStockAlerts(),
+  topProducts: () => dashboardAPI.getTopProducts(),
+};
+
+const initialState = Object.keys(SECTIONS).reduce(
+  (acc, key) => ({ ...acc, [key]: { loading: true, error: null, data: null } }),
+  {}
+);
+
+const formatCurrency = (amount) =>
+  new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount || 0);
+
+const formatNumber = (num) => new Intl.NumberFormat('en-IN').format(num || 0);
+
+const greeting = () => {
+  const h = new Date().getHours();
+  return h < 12 ? 'morning' : h < 18 ? 'afternoon' : 'evening';
+};
 
 const Dashboard = () => {
-  // Dashboard state
-  const [dashboardData, setDashboardData] = useState({
-    sales: { loading: false, error: null, data: null },
-    inventory: { loading: false, error: null, data: null },
-    todos: { loading: false, error: null, data: null },
-    financial: { loading: false, error: null, data: null },
-    customers: { loading: false, error: null, data: null },
-    suppliers: { loading: false, error: null, data: null },
-    lowStock: { loading: false, error: null, data: null },
-    topProducts: { loading: false, error: null, data: null }
-  });
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [state, setState] = useState(initialState);
 
-  // Generic function to update dashboard data
-  const updateDashboardSection = (section, updates) => {
-    setDashboardData(prev => ({
-      ...prev,
-      [section]: { ...prev[section], ...updates }
-    }));
-  };
-
-  // Generic fetch function for dashboard sections
-  const fetchDashboardData = async (section, apiCall, successMessage = null) => {
-    updateDashboardSection(section, { loading: true, error: null });
+  const load = useCallback(async (key) => {
+    setState((prev) => ({ ...prev, [key]: { ...prev[key], loading: true, error: null } }));
     try {
-      const data = await apiCall();
-      updateDashboardSection(section, { loading: false, data });
-      if (successMessage) {
-        toast.success(successMessage);
-      }
+      const data = await SECTIONS[key]();
+      setState((prev) => ({ ...prev, [key]: { loading: false, error: null, data } }));
     } catch (error) {
-      console.error(`Error fetching ${section}:`, error);
-      updateDashboardSection(section, { 
-        loading: false, 
-        error: error.message || `Failed to load ${section} data` 
-      });
+      console.error(`Error fetching ${key}:`, error);
+      setState((prev) => ({
+        ...prev,
+        [key]: { loading: false, error: error.message || `Failed to load ${key} data`, data: null },
+      }));
     }
-  };
-
-  // Individual fetch functions for each dashboard section
-  const fetchSales = () => fetchDashboardData('sales', () => dashboardAPI.getSalesStats(), 'Sales data refreshed');
-  const fetchInventory = () => fetchDashboardData('inventory', () => dashboardAPI.getInventoryStats(), 'Inventory data refreshed');
-  const fetchTodos = () => fetchDashboardData('todos', () => dashboardAPI.getTodoStats(), 'Todo data refreshed');
-  const fetchFinancial = () => fetchDashboardData('financial', () => dashboardAPI.getFinancialStats(), 'Financial data refreshed');
-  const fetchCustomers = () => fetchDashboardData('customers', () => dashboardAPI.getCustomerStats(), 'Customer data refreshed');
-  const fetchSuppliers = () => fetchDashboardData('suppliers', () => dashboardAPI.getSupplierStats(), 'Supplier data refreshed');
-  const fetchLowStock = () => fetchDashboardData('lowStock', () => dashboardAPI.getLowStockAlerts(), 'Stock alerts refreshed');
-  const fetchTopProducts = () => fetchDashboardData('topProducts', () => dashboardAPI.getTopProducts(), 'Top products refreshed');
-
-  // Load initial data
-  useEffect(() => {
-    const loadInitialData = async () => {
-      // Load all dashboard data on component mount
-      await Promise.all([
-        fetchDashboardData('sales', () => dashboardAPI.getSalesStats()),
-        fetchDashboardData('inventory', () => dashboardAPI.getInventoryStats()),
-        fetchDashboardData('todos', () => dashboardAPI.getTodoStats()),
-        fetchDashboardData('financial', () => dashboardAPI.getFinancialStats()),
-        fetchDashboardData('customers', () => dashboardAPI.getCustomerStats()),
-        fetchDashboardData('suppliers', () => dashboardAPI.getSupplierStats()),
-        fetchDashboardData('lowStock', () => dashboardAPI.getLowStockAlerts()),
-        fetchDashboardData('topProducts', () => dashboardAPI.getTopProducts())
-      ]);
-    };
-
-    loadInitialData();
   }, []);
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-IN', { 
-      style: 'currency', 
-      currency: 'INR' 
-    }).format(amount || 0);
-  };
 
-  const formatNumber = (num) => {
-    return new Intl.NumberFormat('en-IN').format(num || 0);
-  };
+  const loadAll = useCallback(() => Promise.all(Object.keys(SECTIONS).map(load)), [load]);
+
+  useEffect(() => {
+    loadAll();
+  }, [loadAll]);
+
+  const anyLoading = Object.values(state).some((s) => s.loading);
+  const failed = Object.keys(state).filter((k) => state[k].error);
+
+  const { sales, inventory, todos, financial, customers, suppliers, lowStock, topProducts } = state;
+  const firstName = (user?.g_fullname || user?.g_username || '').split(' ')[0];
+
+  const revenue = financial.data?.revenue || 0;
+  const profit = financial.data?.profit || 0;
+  const expenses = financial.data?.expenses || 0;
+  const barBase = Math.max(revenue, profit, expenses, 1);
+
+  const lowItems = lowStock.data?.items ?? [];
+  const products = topProducts.data?.products ?? [];
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="w-full">
+    <div className="min-h-screen w-full bg-background p-4 text-foreground sm:p-6 lg:p-8">
+      <div className="mx-auto w-full max-w-[1440px]">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Dashboard</h1>
-          <p className="text-gray-600">Comprehensive overview of your business metrics</p>
+        <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-[1.65rem] font-semibold leading-tight tracking-[-0.025em]">
+              Good {greeting()}
+              {firstName ? `, ${firstName}` : ''}
+            </h1>
+            <p className="mt-1 text-sm text-foreground-muted">Here&apos;s how the business is doing.</p>
+          </div>
+          <button
+            type="button"
+            onClick={loadAll}
+            disabled={anyLoading}
+            className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-3.5 py-2 text-sm font-medium text-foreground hover:bg-surface-muted disabled:opacity-60"
+          >
+            <RefreshCw className={`h-4 w-4 ${anyLoading ? 'animate-spin' : ''}`} aria-hidden="true" />
+            Refresh
+          </button>
         </div>
 
-        {/* Dashboard Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-4">
-          
-          {/* Sales Statistics Card */}
-          <DashboardCard
-            title="Sales Overview"
-            subtitle="Last 30 days"
-            icon="💰"
-            color="green"
-            value={formatCurrency(dashboardData.sales.data?.total_sales)}
-            trend={dashboardData.sales.data?.trend}
-            trendValue={dashboardData.sales.data?.trend_percentage && `${dashboardData.sales.data.trend_percentage}%`}
-            onRefresh={fetchSales}
-            loading={dashboardData.sales.loading}
-            error={dashboardData.sales.error}
+        {failed.length > 0 && !anyLoading && (
+          <div
+            role="alert"
+            className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger"
           >
-            {dashboardData.sales.data && (
-              <div className="space-y-1.5">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Orders:</span>
-                  <span className="font-medium text-gray-900">{formatNumber(dashboardData.sales.data.total_orders)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Avg Order:</span>
-                  <span className="font-medium text-gray-900">{formatCurrency(dashboardData.sales.data.avg_order_value)}</span>
-                </div>
-              </div>
-            )}
-          </DashboardCard>
-
-          {/* Inventory Statistics Card */}
-          <DashboardCard
-            title="Inventory Status"
-            subtitle="Current stock levels"
-            icon="📦"
-            color="blue"
-            value={formatNumber(dashboardData.inventory.data?.total_items)}
-            onRefresh={fetchInventory}
-            loading={dashboardData.inventory.loading}
-            error={dashboardData.inventory.error}
-          >
-            {dashboardData.inventory.data && (
-              <div className="space-y-1.5">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Total Value:</span>
-                  <span className="font-medium text-gray-900">{formatCurrency(dashboardData.inventory.data.total_value)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Categories:</span>
-                  <span className="font-medium text-gray-900">{formatNumber(dashboardData.inventory.data.total_categories)}</span>
-                </div>
-              </div>
-            )}
-          </DashboardCard>
-
-          {/* Stock Shortages Card */}
-          <DashboardCard
-            title="Stock Alerts"
-            subtitle="Low stock items"
-            icon="⚠️"
-            color="red"
-            value={formatNumber(dashboardData.lowStock.data?.count)}
-            onRefresh={fetchLowStock}
-            loading={dashboardData.lowStock.loading}
-            error={dashboardData.lowStock.error}
-          >
-            {dashboardData.lowStock.data?.items && dashboardData.lowStock.data.items.length > 0 ? (
-              <div className="space-y-1 max-h-28 overflow-y-auto">
-                {dashboardData.lowStock.data.items.slice(0, 4).map((item, index) => (
-                  <div key={index} className="flex justify-between items-center">
-                    <span className="text-gray-700 truncate text-xs">{item.name}</span>
-                    <span className="font-medium text-red-600 text-xs flex-shrink-0 ml-2">{item.quantity} left</span>
-                  </div>
-                ))}
-                {dashboardData.lowStock.data.items.length > 4 && (
-                  <div className="text-xs text-gray-500 text-center pt-1 border-t border-gray-100">
-                    +{dashboardData.lowStock.data.items.length - 4} more items
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="text-center text-green-600 text-xs font-medium py-2">
-                ✅ All items well stocked
-              </div>
-            )}
-          </DashboardCard>
-
-          {/* Todo/Tasks Card */}
-          <DashboardCard
-            title="Pending Tasks"
-            subtitle="Action items"
-            icon="✅"
-            color="purple"
-            value={formatNumber(dashboardData.todos.data?.pending_count)}
-            onRefresh={fetchTodos}
-            loading={dashboardData.todos.loading}
-            error={dashboardData.todos.error}
-          >
-            {dashboardData.todos.data && (
-              <div className="space-y-1.5">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">High Priority:</span>
-                  <span className="font-medium text-red-600">{formatNumber(dashboardData.todos.data.high_priority)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Completed Today:</span>
-                  <span className="font-medium text-green-600">{formatNumber(dashboardData.todos.data.completed_today)}</span>
-                </div>
-              </div>
-            )}
-          </DashboardCard>
-
-          {/* Financial Summary Card */}
-          <DashboardCard
-            title="Financial Summary"
-            subtitle="This month"
-            icon="💹"
-            color="indigo"
-            value={formatCurrency(dashboardData.financial.data?.revenue)}
-            trend={dashboardData.financial.data?.revenue_trend}
-            trendValue={dashboardData.financial.data?.revenue_trend_percentage && `${dashboardData.financial.data.revenue_trend_percentage}%`}
-            onRefresh={fetchFinancial}
-            loading={dashboardData.financial.loading}
-            error={dashboardData.financial.error}
-          >
-            {dashboardData.financial.data && (
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Profit:</span>
-                  <span className="font-medium text-green-600">{formatCurrency(dashboardData.financial.data.profit)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Expenses:</span>
-                  <span className="font-medium text-red-600">{formatCurrency(dashboardData.financial.data.expenses)}</span>
-                </div>
-              </div>
-            )}
-          </DashboardCard>
-
-          {/* Customer Statistics Card */}
-          <DashboardCard
-            title="Customers"
-            subtitle="Customer base"
-            icon="👥"
-            color="green"
-            value={formatNumber(dashboardData.customers.data?.total_customers)}
-            trend={dashboardData.customers.data?.trend}
-            trendValue={dashboardData.customers.data?.new_customers_this_month && `+${dashboardData.customers.data.new_customers_this_month} this month`}
-            onRefresh={fetchCustomers}
-            loading={dashboardData.customers.loading}
-            error={dashboardData.customers.error}
-          >
-            {dashboardData.customers.data && (
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Active:</span>
-                  <span className="font-medium">{formatNumber(dashboardData.customers.data.active_customers)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">New This Week:</span>
-                  <span className="font-medium text-green-600">{formatNumber(dashboardData.customers.data.new_customers_this_week)}</span>
-                </div>
-              </div>
-            )}
-          </DashboardCard>
-
-          {/* Supplier Statistics Card */}
-          <DashboardCard
-            title="Suppliers"
-            subtitle="Supply chain"
-            icon="🏭"
-            color="orange"
-            value={formatNumber(dashboardData.suppliers.data?.total_suppliers)}
-            onRefresh={fetchSuppliers}
-            loading={dashboardData.suppliers.loading}
-            error={dashboardData.suppliers.error}
-          >
-            {dashboardData.suppliers.data && (
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Active:</span>
-                  <span className="font-medium">{formatNumber(dashboardData.suppliers.data.active_suppliers)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Orders Pending:</span>
-                  <span className="font-medium text-orange-600">{formatNumber(dashboardData.suppliers.data.pending_orders)}</span>
-                </div>
-              </div>
-            )}
-          </DashboardCard>
-
-          {/* Top Products Card */}
-          <DashboardCard
-            title="Top Products"
-            subtitle="Best sellers"
-            icon="🏆"
-            color="purple"
-            onRefresh={fetchTopProducts}
-            loading={dashboardData.topProducts.loading}
-            error={dashboardData.topProducts.error}
-          >
-            {dashboardData.topProducts.data?.products && dashboardData.topProducts.data.products.length > 0 ? (
-              <div className="space-y-2 max-h-28 overflow-y-auto">
-                {dashboardData.topProducts.data.products.slice(0, 3).map((product, index) => (
-                  <div key={index} className="">
-                    <div className="flex justify-between items-start">
-                      <div className="font-medium text-gray-800 truncate text-xs">{product.name}</div>
-                      <div className="font-medium text-xs ml-2 flex-shrink-0">{formatCurrency(product.revenue)}</div>
-                    </div>
-                    <div className="text-gray-500 text-xs">{formatNumber(product.quantity_sold)} sold</div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center text-gray-500 text-xs py-2">
-                📊 No sales data available
-              </div>
-            )}
-          </DashboardCard>
-
-        </div>
-
-        {/* Quick Actions Section */}
-        <div className="mt-6 bg-white rounded-lg border border-gray-200 p-4">
-          <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
-            <span className="text-lg">⚡</span>
-            Quick Actions
-          </h3>
-          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
-            <button className="flex flex-col items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors">
-              <div className="text-lg mb-1">➕</div>
-              <div className="text-xs font-medium text-gray-700 text-center">Add Product</div>
-            </button>
-            <button className="flex flex-col items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors">
-              <div className="text-lg mb-1">🛒</div>
-              <div className="text-xs font-medium text-gray-700 text-center">New Order</div>
-            </button>
-            <button className="flex flex-col items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors">
-              <div className="text-lg mb-1">👤</div>
-              <div className="text-xs font-medium text-gray-700 text-center">Add Customer</div>
-            </button>
-            <button className="flex flex-col items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors">
-              <div className="text-lg mb-1">📊</div>
-              <div className="text-xs font-medium text-gray-700 text-center">View Reports</div>
-            </button>
-            <button className="flex flex-col items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors">
-              <div className="text-lg mb-1">🏢</div>
-              <div className="text-xs font-medium text-gray-700 text-center">Add Supplier</div>
-            </button>
-            <button className="flex flex-col items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors">
-              <div className="text-lg mb-1">📋</div>
-              <div className="text-xs font-medium text-gray-700 text-center">Manage Tasks</div>
-            </button>
-            <button className="flex flex-col items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors">
-              <div className="text-lg mb-1">📈</div>
-              <div className="text-xs font-medium text-gray-700 text-center">Analytics</div>
-            </button>
-            <button className="flex flex-col items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors">
-              <div className="text-lg mb-1">⚙️</div>
-              <div className="text-xs font-medium text-gray-700 text-center">Settings</div>
+            <span>Couldn&apos;t load: {failed.join(', ')}.</span>
+            <button
+              type="button"
+              onClick={() => failed.forEach(load)}
+              className="font-semibold underline underline-offset-2"
+            >
+              Try again
             </button>
           </div>
+        )}
+
+        {/* Bento grid */}
+        <div className="grid grid-cols-12 gap-4">
+          <Kpi
+            i={0}
+            span="col-span-6 lg:col-span-3"
+            accent
+            icon={TrendingUp}
+            label="Sales, last 30 days"
+            loading={sales.loading}
+            value={formatCurrency(sales.data?.total_sales)}
+            sub={
+              sales.data?.trend_percentage ? (
+                <span>
+                  {sales.data.trend === 'down' ? '▼' : '▲'} {sales.data.trend_percentage}% vs last period
+                </span>
+              ) : (
+                `${formatNumber(sales.data?.total_orders)} orders`
+              )
+            }
+          />
+          <Kpi
+            i={1}
+            span="col-span-6 lg:col-span-3"
+            icon={Boxes}
+            label="Items in stock"
+            loading={inventory.loading}
+            value={formatNumber(inventory.data?.total_items)}
+            sub={`${formatCurrency(inventory.data?.total_value)} value`}
+          />
+          <Kpi
+            i={2}
+            span="col-span-6 lg:col-span-3"
+            icon={AlertTriangle}
+            label="Low stock"
+            loading={lowStock.loading}
+            value={formatNumber(lowStock.data?.count ?? lowItems.length)}
+            tone={(lowStock.data?.count ?? lowItems.length) > 0 ? 'warn' : undefined}
+            sub={
+              <Link to="/stock" className="underline-offset-2 hover:underline">
+                Review stock
+              </Link>
+            }
+          />
+          <Kpi
+            i={3}
+            span="col-span-6 lg:col-span-3"
+            icon={Users}
+            label="Customers"
+            loading={customers.loading}
+            value={formatNumber(customers.data?.total_customers)}
+            sub={
+              customers.data?.new_customers_this_month
+                ? `+${formatNumber(customers.data.new_customers_this_month)} this month`
+                : `${formatNumber(customers.data?.active_customers)} active`
+            }
+          />
+
+          {/* Financial summary */}
+          <section className="rise card-surface col-span-12 p-5 lg:col-span-8" style={{ '--i': 4 }}>
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-[0.95rem] font-semibold tracking-tight">Financial summary</h2>
+              <span className="text-xs text-foreground-muted">This month</span>
+            </div>
+            {financial.loading ? (
+              <Skeleton rows={3} />
+            ) : financial.error ? (
+              <p className="py-10 text-center text-sm text-foreground-muted">Financial data is unavailable right now.</p>
+            ) : (
+              <div className="space-y-4">
+                <Bar label="Revenue" value={revenue} base={barBase} color="var(--brand)" />
+                <Bar label="Profit" value={profit} base={barBase} color="var(--green-900)" />
+                <Bar label="Expenses" value={expenses} base={barBase} color="var(--warning)" />
+              </div>
+            )}
+          </section>
+
+          {/* Tasks + suppliers */}
+          <div className="col-span-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:col-span-4 lg:grid-cols-1">
+            <section className="rise card-surface p-5" style={{ '--i': 5 }}>
+              <div className="flex items-center gap-2 text-xs font-medium text-foreground-muted">
+                <ClipboardList className="h-4 w-4 text-brand" aria-hidden="true" />
+                Pending tasks
+              </div>
+              <p className="num-xl mt-3">{todos.loading ? '…' : formatNumber(todos.data?.pending_count)}</p>
+              <p className="mt-2 text-xs text-foreground-muted">
+                <span className="font-semibold text-danger">{formatNumber(todos.data?.high_priority)}</span> high priority ·{' '}
+                {formatNumber(todos.data?.completed_today)} done today
+              </p>
+            </section>
+            <section className="rise card-surface p-5" style={{ '--i': 6 }}>
+              <div className="flex items-center gap-2 text-xs font-medium text-foreground-muted">
+                <Factory className="h-4 w-4 text-brand" aria-hidden="true" />
+                Suppliers
+              </div>
+              <p className="num-xl mt-3">{suppliers.loading ? '…' : formatNumber(suppliers.data?.total_suppliers)}</p>
+              <p className="mt-2 text-xs text-foreground-muted">
+                {formatNumber(suppliers.data?.active_suppliers)} active ·{' '}
+                <span className="font-semibold text-warning">{formatNumber(suppliers.data?.pending_orders)}</span> orders pending
+              </p>
+            </section>
+          </div>
+
+          {/* Lists */}
+          <ListCard
+            i={7}
+            title="Low inventory"
+            href="/stock"
+            loading={lowStock.loading}
+            error={lowStock.error}
+            empty="All items are well stocked."
+            rows={lowItems.slice(0, 6).map((item, idx) => ({
+              k: item.id ?? idx,
+              a: item.name,
+              b: item.sku || item.barcode || '',
+              end: <Pill tone="warn">{item.quantity} left</Pill>,
+            }))}
+          />
+          <ListCard
+            i={8}
+            title="Top products"
+            href="/sales"
+            loading={topProducts.loading}
+            error={topProducts.error}
+            empty="No sales data yet."
+            rows={products.slice(0, 6).map((p, idx) => ({
+              k: p.id ?? idx,
+              a: p.name,
+              b: `${formatNumber(p.quantity_sold)} sold`,
+              end: <span className="tabular text-sm font-semibold">{formatCurrency(p.revenue)}</span>,
+            }))}
+          />
+          <ListCard
+            i={9}
+            title="Business snapshot"
+            href="/reports"
+            loading={sales.loading && inventory.loading}
+            empty="No data yet."
+            rows={[
+              { k: 'orders', a: 'Orders (30 days)', b: 'Sales', end: <span className="tabular text-sm font-semibold">{formatNumber(sales.data?.total_orders)}</span> },
+              { k: 'avg', a: 'Average order', b: 'Sales', end: <span className="tabular text-sm font-semibold">{formatCurrency(sales.data?.avg_order_value)}</span> },
+              { k: 'value', a: 'Inventory value', b: 'Stock', end: <span className="tabular text-sm font-semibold">{formatCurrency(inventory.data?.total_value)}</span> },
+              { k: 'cats', a: 'Categories', b: 'Stock', end: <span className="tabular text-sm font-semibold">{formatNumber(inventory.data?.total_categories)}</span> },
+            ]}
+          />
         </div>
+
+        {/* Quick actions */}
+        <section className="rise card-surface mt-4 p-5" style={{ '--i': 10 }}>
+          <h2 className="mb-3 text-[0.95rem] font-semibold tracking-tight">Quick actions</h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            {[
+              { label: 'Add product', icon: PackagePlus, to: '/items' },
+              { label: 'New sale', icon: ShoppingCart, to: '/sales' },
+              { label: 'Add partner', icon: UserPlus, to: '/partners' },
+              { label: 'Stock entry', icon: Boxes, to: '/stock' },
+              { label: 'Reports', icon: BarChart3, to: '/reports' },
+              { label: 'Settings', icon: Settings, to: '/settings' },
+            ].map(({ label, icon, to }) => {
+              const Icon = icon;
+              return (
+              <button
+                key={label}
+                type="button"
+                onClick={() => navigate(to)}
+                className="flex flex-col items-center gap-2 rounded-xl! border-border! bg-surface-muted! px-3 py-4 text-xs font-medium text-foreground! transition-colors hover:bg-brand-soft!"
+              >
+                <Icon className="h-5 w-5 text-brand" aria-hidden="true" />
+                {label}
+              </button>
+              );
+            })}
+          </div>
+        </section>
       </div>
     </div>
   );
 };
+
+function Kpi({ i, span, icon, label, value, sub, accent, tone, loading }) {
+  const Icon = icon;
+  const iconColor = accent
+    ? 'text-white/80'
+    : tone === 'warn'
+      ? 'text-warning'
+      : tone === 'bad'
+        ? 'text-danger'
+        : 'text-brand';
+  return (
+    <div
+      className={`rise ${span} rounded-2xl border p-5 ${accent ? 'border-transparent bg-[var(--green-900)] text-white' : 'card-surface'}`}
+      style={{ '--i': i }}
+    >
+      <div className="flex items-center gap-2">
+        <Icon className={`h-4 w-4 ${iconColor}`} aria-hidden="true" />
+        <p className={`text-xs font-medium ${accent ? 'text-white/75' : 'text-foreground-muted'}`}>{label}</p>
+      </div>
+      <p className="num-xl mt-3 truncate">{loading ? '…' : value}</p>
+      {sub && !loading && (
+        <div className={`mt-2 text-xs ${accent ? 'text-white/75' : 'text-foreground-muted'}`}>{sub}</div>
+      )}
+    </div>
+  );
+}
+
+function Bar({ label, value, base, color }) {
+  const pct = Math.max(2, Math.min(100, (Math.max(value, 0) / base) * 100));
+  return (
+    <div>
+      <div className="mb-1.5 flex items-center justify-between text-sm">
+        <span className="font-medium">{label}</span>
+        <span className="tabular font-semibold">{formatCurrency(value)}</span>
+      </div>
+      <div className="h-2.5 overflow-hidden rounded-full bg-surface-muted">
+        <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
+      </div>
+    </div>
+  );
+}
+
+function Pill({ tone, children }) {
+  const tones = {
+    warn: 'bg-warning-soft text-warning',
+    bad: 'bg-danger-soft text-danger',
+    good: 'bg-success-soft text-success',
+  };
+  return (
+    <span className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${tones[tone]}`}>
+      {children}
+    </span>
+  );
+}
+
+function Skeleton({ rows = 3 }) {
+  return (
+    <div className="space-y-4">
+      {Array.from({ length: rows }).map((_, idx) => (
+        <div key={idx} className="h-8 animate-pulse rounded-lg bg-surface-muted" />
+      ))}
+    </div>
+  );
+}
+
+function ListCard({ i, title, href, rows, empty, loading, error }) {
+  return (
+    <section className="rise card-surface col-span-12 p-5 lg:col-span-4" style={{ '--i': i }}>
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-[0.95rem] font-semibold tracking-tight">{title}</h2>
+        <Link to={href} className="text-xs font-medium text-brand! hover:underline">
+          View all
+        </Link>
+      </div>
+      {loading ? (
+        <Skeleton rows={3} />
+      ) : error ? (
+        <p className="py-6 text-center text-sm text-foreground-muted">Couldn&apos;t load this section.</p>
+      ) : rows.length === 0 ? (
+        <p className="py-6 text-center text-sm text-foreground-muted">{empty}</p>
+      ) : (
+        <ul className="divide-y divide-border">
+          {rows.map((r) => (
+            <li key={r.k} className="flex items-center justify-between gap-3 py-2.5">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">{r.a}</p>
+                {r.b && <p className="truncate text-xs text-foreground-muted">{r.b}</p>}
+              </div>
+              {r.end}
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
 
 export default Dashboard;

@@ -128,3 +128,70 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+/* ---- nodedr-pos home screen theme (forest green, light) ---- */
+:root {
+  --background: #f7f9f6;
+  --surface: #ffffff;
+  --surface-muted: #f1f5f0;
+  --border: #e4ebe4;
+  --border-subtle: #edf2ed;
+  --foreground: #17251d;
+  --foreground-muted: #5b6a60;
+  --danger: #c13c3c;
+  --danger-soft: rgba(193, 60, 60, 0.1);
+  --success: #176c45;
+  --success-soft: #e8f3ea;
+  --warning: #9a5b0d;
+  --warning-soft: rgba(216, 154, 67, 0.16);
+  --brand: #176c45;
+  --brand-foreground: #ffffff;
+  --brand-soft: #e8f3ea;
+  --brand-glow: rgba(23, 108, 69, 0.3);
+  --green-900: #0d3b28;
+  --green-950: #082c1d;
+  --shadow-card: 0 2px 8px rgb(14 45 27 / 4%), 0 14px 36px rgb(14 45 27 / 4%);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-border: var(--border);
+  --color-border-subtle: var(--border-subtle);
+  --color-foreground: var(--foreground);
+  --color-foreground-muted: var(--foreground-muted);
+  --color-brand: var(--brand);
+  --color-brand-soft: var(--brand-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+}
+
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Entrance stagger: set style={{ '--i': index }} on each card.
+   fill-mode is `backwards` (not `both`) so the element does not stay a
+   containing block for fixed-position modals inside it. */
+.rise { animation: rise-in 340ms var(--ease-out) backwards; animation-delay: calc(var(--i, 0) * 45ms); }
+
+.card-surface {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-card);
+  border-radius: 16px;
+}
+
+.tabular { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
+.num-xl { font-size: 2rem; line-height: 1.05; letter-spacing: -0.04em; font-weight: 650; font-variant-numeric: tabular-nums; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rise { animation-duration: 0.01ms !important; animation-delay: 0ms !important; }
+}
