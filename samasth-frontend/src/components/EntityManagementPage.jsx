@@ -3,6 +3,7 @@ import { PlusIcon, PencilIcon, TrashIcon, EyeIcon } from '@heroicons/react/24/ou
 import HierarchicalEntityTypeSelector from './HierarchicalEntityTypeSelector';
 import ManufacturerSelector from './ManufacturerSelector';
 import ChildUnitSelectionModal from './ChildUnitSelectionModal';
+import HsnLookupModal from './HsnLookupModal';
 import { entityAPI, unitAPI } from '../services/api';
 import toast from 'react-hot-toast';
 
@@ -21,10 +22,12 @@ const EntityManagementPage = () => {
     // description: '', // Commented - replaced with remarks
     remarks: '',
     barcode: '',
+    hsn: '',
     // status: 'active' // Commented - not in backend struct
   });
   const [formErrors, setFormErrors] = useState({});
   const [showChildUnitModal, setShowChildUnitModal] = useState(false);
+  const [showHsnLookup, setShowHsnLookup] = useState(false);
   const [selectedEntityType, setSelectedEntityType] = useState(null);
   const [childUnits, setChildUnits] = useState([]);
   const [pendingEntityVariants, setPendingEntityVariants] = useState([]);
@@ -144,6 +147,7 @@ const EntityManagementPage = () => {
       // description: '', // Commented - replaced with remarks
       remarks: '',
       barcode: '',
+      hsn: '',
       // status: 'active' // Commented - not in backend struct
     });
     setFormErrors({});
@@ -166,6 +170,7 @@ const EntityManagementPage = () => {
       // unit: entity.unit || 'kg', // Commented - removed unit selector per backend struct
       remarks: entity.e_remarks || entity.description || '',
       barcode: entity.e_barcode || entity.barcode || '',
+      hsn: entity.hsn || '',
       // status: entity.status || 'active' // Commented - not in backend struct
     });
     setShowAddForm(true);
@@ -398,17 +403,26 @@ const EntityManagementPage = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   HSN
                 </label>
-                <input
-                  type="text"
-                  value={formData.hsn}
-                  onChange={handleNameChange}
-                  className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    formErrors.hsn ? 'border-red-300' : 'border-gray-300'
-                  }`}
-                  placeholder="Enter HSN"
-                />
-                {formErrors.name && (
-                  <p className="text-sm text-red-600 mt-1">{formErrors.name}</p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={formData.hsn || ''}
+                    onChange={(e) => setFormData({ ...formData, hsn: e.target.value })}
+                    className={`flex-1 min-w-0 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      formErrors.hsn ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                    placeholder="Enter HSN"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowHsnLookup(true)}
+                    className="shrink-0 whitespace-nowrap"
+                  >
+                    🔍 Lookup
+                  </button>
+                </div>
+                {formErrors.hsn && (
+                  <p className="text-sm text-red-600 mt-1">{formErrors.hsn}</p>
                 )}
               </div>
 
@@ -668,6 +682,9 @@ const EntityManagementPage = () => {
         parentUnit={selectedEntityType}
         childUnits={childUnits}
       />
+
+      {/* HSN Lookup Modal */}
+      <HsnLookupModal isOpen={showHsnLookup} onClose={() => setShowHsnLookup(false)} />
     </div>
   );
 };
