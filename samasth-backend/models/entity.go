@@ -125,14 +125,14 @@ func ParseWeightFromRaw(raw json.RawMessage) (float64, error) {
 
 // EntityResponse represents the response structure for entity
 type EntityResponse struct {
-	EID          string              `json:"e_id"`
+	EID          string              `json:"EID"`
 	Manufacturer string              `json:"e_manufacturer"`
-	EntityName   string              `json:"e_name"`
+	EntityName   string              `json:"EName"`
 	Weight       float64             `json:"e_weight"`
 	Remarks      string              `json:"e_remarks"`
 	ETID         string              `json:"et_id"`
-	EBarCode     string              `json:"e_barcode"`
-	CreatedAt    time.Time           `json:"created_at"`
+	EBarCode     string              `json:"ECode"`
+	CreatedAt    time.Time           `json:"CreatedAt"`
 	UpdatedAt    time.Time           `json:"updated_at"`
-	EntityType   *EntityTypeResponse `json:"entity_type,omitempty"`
+	EntityType   *EntityTypeResponse `json:"EType,omitempty"`
 }

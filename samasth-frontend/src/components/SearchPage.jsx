@@ -19,7 +19,7 @@ const SearchPage = () => {
     if (!searchQuery.trim()) return;
     setIsLoading(true);
     try {
-      const data = await entityAPI.search(searchQuery.trim());
+      const data = await entityAPI.searchEntity(searchQuery.trim());
       // expected: Array of { resultType: string, results: [] | null }
       if (Array.isArray(data)) {
         setResultSections(data);
@@ -238,7 +238,6 @@ const SearchPage = () => {
                       <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                           <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">EID</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
@@ -250,11 +249,10 @@ const SearchPage = () => {
                             <tr><td className="px-6 py-4 text-sm text-gray-500" colSpan="5">No results</td></tr>
                           ) : results.map((r, idx) => (
                             <tr key={r.EID || idx} className="hover:bg-gray-50">
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{r.EID}</td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{r.EName}</td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{r.EType}</td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{r.ECode}</td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{r.CreatedAt}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{r.e_name}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{type}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{r.e_barcode}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{r.created_at}</td>
                             </tr>
                           ))}
                         </tbody>

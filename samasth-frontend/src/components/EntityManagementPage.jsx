@@ -332,7 +332,7 @@ const EntityManagementPage = () => {
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Entity Name */}
-              <div className="md:col-span-2">
+              <div >
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Entity Name *
                 </label>
@@ -350,17 +350,7 @@ const EntityManagementPage = () => {
                 )}
               </div>
 
-              {/* Entity Type */}
-              <div className="md:col-span-2">
-                <HierarchicalEntityTypeSelector
-                  value={formData.entity_type_id}
-                  onChange={handleEntityTypeChange}
-                  error={formErrors.entity_type_id}
-                />
-              </div>
-
-              {/* Manufacturer Selector */}
-              <div className="md:col-span-2">
+              <div >
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Manufacturer
                 </label>
@@ -379,6 +369,65 @@ const EntityManagementPage = () => {
                   placeholder="Enter manufacturer name"
                 />
                 */}
+              </div>
+
+              {/* Entity Type */}
+              <div>
+                <HierarchicalEntityTypeSelector
+                  value={formData.entity_type_id}
+                  onChange={handleEntityTypeChange}
+                  error={formErrors.entity_type_id}
+                />
+              </div>
+
+               {/* Remarks */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Remarks
+                </label>
+                <textarea
+                  value={formData.remarks}
+                  onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
+                  rows={3}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter remarks (optional)"
+                />
+              </div>
+
+               <div >
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  HSN
+                </label>
+                <input
+                  type="text"
+                  value={formData.hsn}
+                  onChange={handleNameChange}
+                  className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    formErrors.hsn ? 'border-red-300' : 'border-gray-300'
+                  }`}
+                  placeholder="Enter HSN"
+                />
+                {formErrors.name && (
+                  <p className="text-sm text-red-600 mt-1">{formErrors.name}</p>
+                )}
+              </div>
+
+              <div >
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  GST % Applicable (Based on HSN)
+                </label>
+                <input
+                  type="text"
+                  value={formData.hsn}
+                  onChange={handleNameChange}
+                  className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    formErrors.hsn ? 'border-red-300' : 'border-gray-300'
+                  }`}
+                  placeholder="Enter HSN"
+                />
+                {formErrors.name && (
+                  <p className="text-sm text-red-600 mt-1">{formErrors.name}</p>
+                )}
               </div>
 
               {/* Weight */}
@@ -437,19 +486,7 @@ const EntityManagementPage = () => {
                 )}
               </div>
 
-              {/* Remarks */}
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Remarks
-                </label>
-                <textarea
-                  value={formData.remarks}
-                  onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
-                  rows={3}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter remarks (optional)"
-                />
-              </div>
+             
             </div>
 
             {/* Pending Entity Variants */}
@@ -528,7 +565,8 @@ const EntityManagementPage = () => {
         </div>
       )}
 
-      {/* Entities List */}
+{/*
+       { Entities List }
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
           <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
@@ -620,7 +658,7 @@ const EntityManagementPage = () => {
           </div>
         )}
       </div>
-      
+      */}
       {/* Child Unit Selection Modal */}
       <ChildUnitSelectionModal
         isOpen={showChildUnitModal}
