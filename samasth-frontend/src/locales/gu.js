@@ -54,6 +54,7 @@ const gu = {
     entityManagement: 'એન્ટિટી મેનેજમેન્ટ',
     businessPartners: 'બિઝનેસ પાર્ટનર્સ',
     stockManagement: 'સ્ટોક મેનેજમેન્ટ',
+    supplyEntry: 'પુરવઠા એન્ટ્રી',
     search: 'શોધો',
     sales: 'વેચાણ',
     generateCoupon: 'કૂપન બનાવો',

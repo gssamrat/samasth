@@ -54,6 +54,7 @@ const hi = {
     entityManagement: 'एंटिटी मैनेजमेंट',
     businessPartners: 'व्यापारिक साझेदार',
     stockManagement: 'स्टॉक मैनेजमेंट',
+    supplyEntry: 'आपूर्ति प्रविष्टि',
     search: 'खोजें',
     sales: 'बिक्री',
     generateCoupon: 'कूपन जेनरेट करें',

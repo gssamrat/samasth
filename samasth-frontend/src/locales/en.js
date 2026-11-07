@@ -54,6 +54,7 @@ const en = {
     entityManagement: 'Entity Management',
     businessPartners: 'Business Partners',
     stockManagement: 'Stock Management',
+    supplyEntry: 'Supply Entry',
     search: 'Search',
     sales: 'Sales',
     generateCoupon: 'Generate Coupon',

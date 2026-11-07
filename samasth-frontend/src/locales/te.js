@@ -205,6 +205,7 @@ const te = {
     entityManagement: 'ఎంటిటీ నిర్వహణ',
     businessPartners: 'వ్యాపార భాగస్వాములు',
     stockManagement: 'స్టాక్ నిర్వహణ',
+    supplyEntry: 'సరఫరా నమోదు',
     search: 'వెతకండి',
     sales: 'అమ్మకాలు',
     generateCoupon: 'కూపన్ జెనరేట్ చేయండి',

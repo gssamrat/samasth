@@ -5,6 +5,7 @@ import Dashboard from './Dashboard';
 import EntityManagementPage from './EntityManagementPage';
 import PartnersManagement from './PartnersManagement';
 import StockManagementPage from './StockManagementPage';
+import SupplyEntryPage from './supply/SupplyEntryPage';
 import SearchPage from './SearchPage';
 import SalePage from './SalePage';
 import CustomerDisplayPage from './CustomerDisplayPage';
@@ -40,6 +41,7 @@ const Home = () => {
             <Route path="/items" element={<EntityManagementPage />} />
             <Route path="/partners" element={<PartnersManagement />} />
             <Route path="/stock" element={<StockManagementPage />} />
+            <Route path="/supply-entry" element={<SupplyEntryPage />} />
             <Route path="/search" element={<SearchPage />} />
             <Route path="/sales" element={<SalePage />} />
             <Route path="/customer-display" element={<CustomerDisplayPage />} />

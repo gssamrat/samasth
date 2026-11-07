@@ -13,7 +13,8 @@ import {
   UsersIcon,
   ArrowRightOnRectangleIcon,
   UserCircleIcon,
-  PrinterIcon
+  PrinterIcon,
+  TruckIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../contexts/AuthContext';
 import { useLocalization } from '../contexts/LocalizationContext';
@@ -28,6 +29,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
     { path: '/items', icon: CubeIcon, labelKey: 'navigation.entityManagement', emoji: '🏢', permission: null },
     { path: '/partners', icon: UsersIcon, labelKey: 'navigation.businessPartners', emoji: '🤝', permission: null },
     { path: '/stock', icon: CubeIcon, labelKey: 'navigation.stockManagement', emoji: '📦', permission: null },
+    { path: '/supply-entry', icon: TruckIcon, labelKey: 'navigation.supplyEntry', emoji: '🚚', permission: null },
     { path: '/search', icon: MagnifyingGlassIcon, labelKey: 'navigation.search', emoji: '🔍', permission: null },
     { path: '/sales', icon: CurrencyDollarIcon, labelKey: 'navigation.sales', emoji: '💰', permission: null },
     { path: '/generate-coupon', icon: TicketIcon, labelKey: 'navigation.generateCoupon', emoji: '🎫', permission: null },
